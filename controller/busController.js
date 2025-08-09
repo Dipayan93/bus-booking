@@ -56,9 +56,6 @@ const busAvailableSeats = (req, res) => {
         res.status(200).json(results);
     });
 };
-
-
-
 module.exports = {
     addUsers,
     getallUsers,

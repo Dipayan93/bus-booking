@@ -1,64 +1,80 @@
-const db = require('../utils/db-connection')
+const db = require('../utils/db-connection');
 
-const addEntries = (req, res) => {
-    const {email, name} = req.body;
-    const insertQuery = `INSERT INTO students (email,name) VALUES (?,?)`;
-
-    db.execute(insertQuery,[email,name], (err)=>{
-        if(err){
-            console.log(err.message);
-            res.status(500).send(err.message);
-            connection.end();
-            return;
+const insertStudent = (req, res) => {
+    const { name, email, age } = req.body;
+    const query = `INSERT INTO Students (name, email, age) VALUES (?, ?, ?)`;
+    db.execute(query, [name, email, age], (err, result) => {
+        if (err) {
+            console.error("Insert Error:", err.message);
+            return res.status(500).send(err.message);
         }
+        console.log("Student inserted:", result.insertId);
+        res.status(201).send(`Student added with ID: ${result.insertId}`);
+    });
+};
 
-        console.log("Value is inserted")
-        res.status(200).send(`Student with name ${name} successfully added`)
-    })
-}
-
-const updateEntry = (req,res) =>{
-    const {id} = req.params;
-    const {email} = req.body;
-    const {name} = req.body;
-     
-    const updateQuery =  `UPDATE students set name= ?, email=? WHERE id= ?`;
-  
-db.execute(updateQuery,[name,email,id],(err,result)=>{
-    if(err){
-        console.log(err);
-        res.status(500).send(err.message);
-        db.end();
-        return;
-    }
-    if(result.affectedRows ===0){
-        res.status(404).send("Student not found");
-        return;
-    }
-    res.status(200).send("User Updated");
-        
-})
-}
-
-const deleteEntry = (req,res) => {
-    const {id} = req.params;
-    const deleteQuery =  `DELETE FROM students WHERE id= ?`;
-
-    db.execute(deleteQuery, [id], (err, results) =>{
-        if(err){
-            console.log(err.message);
-            res.status(500).send(err.message);
+const getAllStudents = (req, res) => {
+    db.execute(`SELECT * FROM Students`, (err, results) => {
+        if (err) {
+            console.error("Fetch Error:", err.message);
+            return res.status(500).send(err.message);
         }
+        res.json(results);
+    });
+};
 
-        if(results.affectedRows === 0){
-            res.status(404).send("Student not found");
-            return;
+const getStudentById = (req, res) => {
+    const { id } = req.params;
+    db.execute(`SELECT * FROM Students WHERE id = ?`, [id], (err, results) => {
+        if (err) {
+            console.error("Fetch Error:", err.message);
+            return res.status(500).send(err.message);
         }
-        res.status(200).send(`User with ${id} is deleted`);
-    })
-}
+        if (results.length === 0) {
+            return res.status(404).send("Student not found");
+        }
+        res.json(results[0]);
+    });
+};
+
+const updateStudent = (req, res) => {
+    const { id } = req.params;
+    const { name, email } = req.body;
+
+    const query = `UPDATE Students SET name = ?, email = ? WHERE id = ?`;
+    db.execute(query, [name, email, id], (err, result) => {
+        if (err) {
+            console.error("Update Error:", err.message);
+            return res.status(500).send(err.message);
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).send("Student not found");
+        }
+        console.log("Student updated:", id);
+        res.send("Student updated successfully");
+    });
+};
+
+const deleteStudent = (req, res) => {
+    const { id } = req.params;
+    const query = `DELETE FROM Students WHERE id = ?`;
+    db.execute(query, [id], (err, result) => {
+        if (err) {
+            console.error("Delete Error:", err.message);
+            return res.status(500).send(err.message);
+        }
+        if (result.affectedRows === 0) {
+            return res.status(404).send("Student not found");
+        }
+        console.log("Student deleted:", id);
+        res.send("Student deleted successfully");
+    });
+};
+
 module.exports = {
-    addEntries,
-    updateEntry,
-    deleteEntry
-}
+    insertStudent,
+    getAllStudents,
+    getStudentById,
+    updateStudent,
+    deleteStudent
+};
